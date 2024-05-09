@@ -1,0 +1,219 @@
+---
+title: "Dynamic Modeling: Sobol ODE"
+authors: "Sam Muir and Melissa Widas"
+date: "9 May 2024"
+---
+
+# 1. Implement model in R
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(deSolve)
+# for sobel
+library(sensitivity)
+```
+
+
+```{r}
+# read in the function
+source("dforestgrowth.R")
+```
+
+
+# 2. Run model for 300 years (using ODE solver)
+
+Initial conditions
+- initial forest size of 10 kg/C
+- canopy closure threshold of 50 kgC
+- K = 250 kg C (carrying capacity)
+- r= 0.01 (exponential growth rate before before canopy closure)
+- g = 2 kg/year (linear growth rate after canopy closure)
+
+```{r}
+# initial forest size
+time = seq(1, 300)
+Cinitial = 10
+thresh = 50
+K = 250
+r = 0.01
+g = 2
+
+parms = list(K = 250, r = 0.01, g = 2, thresh = 50)
+result = ode(y=Cinitial, 
+             times=time,
+             func=forest_growth_model, # growth function
+             parms =parms,
+             thresh = thresh)
+
+result <- as.data.frame(result)
+```
+
+
+# 3. Graph Results
+```{r}
+ggplot(result, aes(time, `1`)) +
+  geom_point() +
+  theme_linedraw()
+```
+
+
+# 4. Run sobol global
+
+Sensitivity analysis that explores how the estimated maximum forest size (e.g maximum of C 300 years), varies with these parameters
+
+- pre canopy closure growth rate (r)
+- post-canopy closure growth rate (g)
+- canopy closure threshold and carrying capacity(K)
+
+Set up the normal distributions for parameters:
+```{r message = FALSE, error = FALSE}
+# generate the sobel parameters
+np=2000
+K = rnorm(mean=250, sd=250*0.01, n=np)
+r = rnorm(mean=0.01, sd=0.01*0.01, n=np)
+g = rnorm(mean = 2, sd = 2*0.01, n = np)
+X1 = cbind.data.frame(r=r, K=K, g = g)
+
+# repeat to get our second set of samples
+K = rnorm(mean=250, sd=250*0.01, n=np)
+r = rnorm(mean=0.01, sd=0.01*0.01, n=np)
+g = rnorm(mean = 2, sd = 2*0.01, n = np)
+X2 = cbind.data.frame(r=r, K=K, g = g)
+
+# fix any negative values and they are not meaningful
+X1 = X1 %>% map_df(pmax, 0.0)
+X2 = X2 %>% map_df(pmax, 0.0)
+
+# run sobel model
+sens_P = sobolSalt(model = NULL,X1, X2, nboot = 300)
+
+# add column names 
+colnames(sens_P$X) = c("r","K", "g")
+```
+
+
+```{r message = FALSE, error = FALSE}
+# gets results for 200 years (evaluating every year)
+thresh = 50
+simtimes = seq(from=1, to=300)
+parms = list(r=sens_P$X[1,"r"], 
+             K=sens_P$X[1,"K"], 
+             g=sens_P$X[1,"g"])
+
+# run ode solver
+result = ode(y=Cinitial, 
+             times=simtimes,
+             func=forest_growth_model, # growth function
+             parms=parms,
+             thresh = thresh)
+
+result = as.data.frame(result)
+
+# rename the column names
+colnames(result)=c("time","C")
+```
+
+
+Set up the compute metrics and wrapper functions:
+```{r message = FALSE, error = FALSE}
+# turn computing our metrics into a function
+compute_metrics = function(result, thresh) {
+  
+  maxgrowth = max(result$C)
+  
+  idx = which(result$C > thresh)[1] # select first year above threshold
+  idx = ifelse(is.na(idx), # if no results from greater than threshold
+               length(result$C), # set index to the length of results 
+               idx) # other wise keep
+  
+  threshyear = result$time[idx]
+  
+return(list(maxgrowth=maxgrowth, threshyear=threshyear))
+}
+```
+
+```{r}
+# try it on our first parameter set
+p_wrapper = function(r, K, g, Cinitial, simtimes, odefunc, metricfunc, thresh) {
+    parms = list(r=r, K=K, g=g)
+    result = ode(y=Cinitial, 
+                 times=simtimes, 
+                 func=odefunc, 
+                 parms=parms,
+                 thresh = thresh) 
+    colnames(result)=c("time","C")
+  # get metrics
+  metrics=metricfunc(as.data.frame(result), thresh=100)
+  return(metrics)
+}
+```
+
+Apply to everything:
+```{r message = FALSE, error = FALSE}
+# now use pmap as we did before
+all = as.data.frame(sens_P$X) %>% 
+  pmap(p_wrapper, 
+       thresh=50,
+       Cinitial=Cinitial, 
+       simtimes=simtimes,
+       odefunc=dforestgrowth,
+       metricfunc=compute_metrics)
+
+# extract out results from pmap into a data frame
+allres = all %>% 
+  map_dfr(`[`,c("maxgrowth","threshyear"))
+
+```
+
+
+
+# 5. Graph results of sensitivity analysis as a box plot of maximum forest size and record the two Sobol indices (S and T).
+
+```{r message = FALSE, error = FALSE}
+# create boxplots
+tmp = allres %>% 
+  pivot_longer(cols=everything(),
+               names_to="metric", 
+               values_to="value")
+
+ggplot(tmp, aes(metric, value, col=metric)) + 
+  geom_boxplot() + 
+  theme_classic()
+```
+
+Collect sobol indices
+```{r}
+sens_P_maxgrowth = sensitivity::tell(sens_P,
+                                  allres$maxgrowth)
+
+# first-order indices (main effect without co-variance)
+rownames(sens_P_maxgrowth$S)=c("r","K", "g")
+sens_P_maxgrowth$S
+
+# total sensitivity index -note that this partitions the output variance 
+rownames(sens_P_maxgrowth$T)=c("r","K", "g")
+sens_P_maxgrowth$T
+
+
+# create another one for max year
+sens_P_threshyear = sensitivity::tell(sens_P,allres$threshyear)
+# first-order indices (main effect without co-variance)
+rownames(sens_P_threshyear$S)=c("r","K", "g")
+sens_P_threshyear$S
+
+# total sensitivity index -note that this partitions the output variance - so values sum to 1
+rownames(sens_P_threshyear$T)=c("r","K", "g")
+sens_P_threshyear$T
+```
+
+The main effect (S) for on max growth by the parameters is growth rate (r) = 0.33, carrying capacity (K) = 0.46, and linear growth rate after canopy closure (g) is 0.24. The total sensitivity (T) for max growth to these parameters are 0.34, 0.42, and 0.23, respectively.
+
+The main effect (S) on threshold year by the parameters r, k, and g, are 0.92, 0.003, and 0.044, respectively. The total sensitivity to these (T) are 0.96, 0.03, and 0.07, respectively. 
+
+
+# 6. Discuss meaning of results of simulation (For example think about how what parameters climate change might influence).
+
+Based on the sensitivity metrics, this means that the max growth is most sensitive to the carrying capacity, but is also very affected by the growth rate, and the threshold year is most sensitive to the growth rate. This is interesting since the growth rate could be affected by warming temperatures, and some forests might experience higher growth rates. This would result in less time to reach carrying capacity / threshold year, which means that there is a potential for changing the long term value of planting that tree. Also, given the rate of deforestation, it would be interesting to examine how the effect of the initial dorest size affects these parameter impacts, and whether there is an impact on what the max growth is. 
+
