@@ -23,7 +23,7 @@ source("dforestgrowth.R")
 # 2. Run the model for 300 years (using the ODE solver) starting with an initial forest size of 10 kg/C, and using the following parameters:       
 -   canopy closure threshold of 50 kgC
 -   K = 250 kg C (carrying capacity)
--   r= 0.01 (exponential growth rate before before canopy closure)
+-   r = 0.01 (exponential growth rate before before canopy closure)
 -   g = 2 kg/year (linear growth rate after canopy closure)
 
 ```{r}
@@ -81,9 +81,7 @@ sens_P = sobolSalt(model = NULL,X1, X2, nboot = 300)
 
 # add column names 
 colnames(sens_P$X) = c("r","K", "g")
-```
 
-```{r}
 # gets results for 300 years (evaluating every year)
 thresh = 50
 simtimes = seq(from=1, to=300)
@@ -194,6 +192,13 @@ sens_P_threshyear$T
 
 The main effect for the parameters are 0.32 (r), 0.36 (K), and 0.23 (g). The sensitivity for max growth rate for these parameters are 0.36 (r), 0.39 (K), and 0.24 (g).
 
-The main effect on threshold year for the parameters are 0.92 (r), -0.04 (K), and 0.003 (g. The sensitivity for max growth rate for these parameters are 0.98 (r), 0.03 (K), and 0.07 (g).
+The main effect on threshold year for the parameters are 0.92 (r), -0.04 (K), and 0.003 (g). The sensitivity for max growth rate for these parameters are 0.98 (r), 0.03 (K), and 0.07 (g).
 
 # 6. Discuss meaning of results of simulation (For example think about how what parameters climate change might influence).
+
+Based on the sensitivity metrics, the max growth is most sensitive to the carrying capacity, but is also very affected by the exponential growth rates and then the linear growth rate. The max growth being most affected by carrying capacity could be amplified by changing environmental factors. For example, if a forest under a new climate regime reaches its carrying capacity much slower or faster this would impact its growth rates and ability to meet canopy closure thresh holds. This could also be impacted by the forest community. If climate factors created increased competition levels growth rates could be impacted.
+
+The threshold year is most sensitive to the exponential growth rate as `r` is only used when the forest growth is under the canopy closure threshold. The threshold year being most sensitive to the exponential growth rate has inferences regarding forest growth rate as the time a forest takes to reach the canopy closure level could change based on environhmental conditions. These conditions could be impacted by climate change. For example, forests that now have greater precipitation and temperatures would vary from forests with more arid conditions. 
+
+
+
