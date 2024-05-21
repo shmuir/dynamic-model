@@ -1,0 +1,49 @@
+---
+title: "Dynamics with two variables"
+author: "Sam Muir & Melissa Widas"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(sensitivity)
+library(tidyverse)
+library(deSolve)
+library(lhs)
+library(purrr)
+library(ggpubr)
+source("lotvmodK.R")
+lotvmodK
+```
+
+```{r}
+# initial conditions
+currpop=c(prey=50, pred=3)
+
+# set parameter list
+pars = c(rprey=0.1, alpha=0.6, eff=0.8, pmort=0.4, K=20, beta=0.1)
+
+# times when you want to evaluate
+days = seq(from=1,to=500)
+
+# run our differential equation solver
+res = ode(func=lotvmodK, y=currpop, times=days, parms=pars)
+
+# rearrange for plotting
+resl = as.data.frame(res) %>% 
+  pivot_longer(-time, names_to="species", values_to="pop")
+
+# graph both populations over time
+p1=ggplot(resl, aes(time, pop, col=species))+geom_line()
+p1
+```
+
+
+```{r}
+lotvmodK()
+```
+
