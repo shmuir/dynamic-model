@@ -58,23 +58,40 @@
 #       return(list(c(dprey,dpred)))}})
 # }
 
-lotvmodK = function(t, pop, pars) {
-  
+# lotvmodK = function(t, pop, pars) {
+# 
+#   with(as.list(c(pars, pop)), {
+#     print(paste("Prey population:", prey))
+#     if (prey >= 30) {
+#       dprey = rprey * (1 - prey / K) * prey - alpha * prey * pred - beta * prey * pred
+#       dpred = eff * alpha * prey * pred - pmort * pred
+#       message("Running model with predation")
+#       return(list(c(dprey, dpred)))
+#     } else if (prey < 30) {
+#       dprey = rprey * (1 - prey / K) * prey - alpha * prey * pred
+#       dpred = eff * alpha * prey * pred - pmort * pred
+#       message("Running model without predation.")
+#       return(list(c(dprey, dpred)))
+#     }
+#   })
+# }
+
+
+lotvmodK <- function(t, pop, pars, min_prey_pop) {
   with(as.list(c(pars, pop)), {
-    print(paste("Prey population:", prey))  # Debugging print statement
-    if (prey >= 30) {
-      dprey = rprey * (1 - prey / K) * prey - alpha * prey * pred - beta * prey * pred
-      dpred = eff * alpha * prey * pred - pmort * pred
-      message("Running model with predation")
-      return(list(c(dprey, dpred)))
-    } else if (prey < 30) {
-      dprey = rprey * (1 - prey / K) * prey - alpha * prey * pred
-      dpred = eff * alpha * prey * pred - pmort * pred
-      message("Running model without predation. If you want to run with predation, please use a higher value for prey population.")
-      return(list(c(dprey, dpred)))
+    dprey = rprey * (1 - prey / K) * prey - alpha * prey * pred - beta * prey * pred
+    dpred <- eff * beta * prey * pred - pmort * pred
+    
+    # ensure prey population remains above min_prey_pop
+    if (prey <= min_prey_pop) {
+      dprey <- max(dprey, 0)  # prevent prey from decreasing below min_prey_population
     }
+    
+    return(list(c(dprey, dpred)))
   })
 }
+
+
 
 
 

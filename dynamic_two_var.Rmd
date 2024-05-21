@@ -21,18 +21,20 @@ lotvmodK
 ```
 
 ```{r}
-# initial conditions
-currpop=c(prey=50, pred=3)
+# Initial conditions
+currpop <- c(prey = 100, pred = 10)
 
-# set parameter list
-pars = c(rprey=0.1, alpha=0.6, eff=0.8, pmort=0.4, K=20, beta=0.1)
+# Set parameter list
+pars <- c(rprey = 0.1, K = 500, alpha = 0.002, beta = 0.005, eff = 0.1, pmort = 0.1)
 
-# times when you want to evaluate
-days = seq(from=1,to=500)
+# Times when you want to evaluate
+days <- seq(from = 1, to = 500)
 
 # run our differential equation solver
-res = ode(func=lotvmodK, y=currpop, times=days, parms=pars)
+res = ode(func=lotvmodK, y=currpop, times=days, parms=pars, min_prey_pop = 50, method = "ode45")
+```
 
+```{r}
 # rearrange for plotting
 resl = as.data.frame(res) %>% 
   pivot_longer(-time, names_to="species", values_to="pop")
@@ -42,8 +44,4 @@ p1=ggplot(resl, aes(time, pop, col=species))+geom_line()
 p1
 ```
 
-
-```{r}
-lotvmodK()
-```
 
