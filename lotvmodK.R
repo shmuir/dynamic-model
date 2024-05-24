@@ -80,7 +80,7 @@
 lotvmodK <- function(t, pop, pars, min_prey_pop) {
   with(as.list(c(pars, pop)), {
     dprey = rprey * (1 - prey / K) * prey - alpha * prey * pred - beta * prey * pred
-    dpred <- eff * beta * prey * pred - pmort * pred
+    dpred <- eff * alpha * prey * pred - pmort * pred
     
     # ensure prey population remains above min_prey_pop
     if (prey <= min_prey_pop) {
