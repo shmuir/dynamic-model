@@ -9,13 +9,14 @@
 #'  \emph{alpha} is a interaction coefficient (higher values greater interaction)
 #'  \emph{beta} is the effect of predator hunting prey
 #’  \emph{pmort}  mortality rate of predictor population
+#' @param thresh minimum threshold for hunting
 #' @examples
-#' lotvod(t=1, pop=list(1,2), pop=list(0.5,0.3,0.2,0.2))
+#' lotvod(t=1, pop=list(1,2), pop=list(0.5,0.3,0.2,0.2), thresh=20)
 #'
 #' pars = c(rprey=0.5, alpha=0.3, eff=0.2, pmort=0.2)
 #' currpop  = c(prey = 1, pred=1)
 #  days = seq(from=1,to=20)
-#' res = ode(func=lotvmod, y=currpop, times=days, parms=pars)
+#' res = ode(func=lotvmod, y=currpop, times=days, parms=pars, thresh=20)
 #'
 #' @return  lotvmod returns a list containing the following components
 #' \describe{
@@ -23,71 +24,18 @@
 #' \item{dpred}{rate of change of preditor populutation}
 #'}
 
-# lotvmodK = function(t, pop, pars) {
-#   if (prey >= 30) {
-#     with(as.list(c(pars,pop)), {
-#       dprey = rprey*(1-prey/K)*prey -  alpha*prey*pred - beta*prey*pred
-#       dpred = eff*alpha*prey*pred - pmort*pred
-#       message(paste("Running model with predation"))
-#       return(list(c(dprey,dpred)))}) }
-#   
-#   else {
-#     with(as.list(c(pars,pop)), {
-#       dprey = rprey*(1-prey/K)*prey -  alpha*prey*pred
-#       dpred = eff*alpha*prey*pred - pmort*pred
-#       message(paste("Running model without predation. If you want to run with predation, please use a higher value for prey population."))
-#       return(list(c(dprey,dpred)))})
-#   }
-# }
+lotvmodK = function(t, pop, pars, thresh) {
 
-# lotvmodK = function(t, pop, pars) {
-#   
-#   with(as.list(c(pars,pop)), {
-#     if (prey >= 30) {
-#       message(paste("Running model with predation"))
-#       dprey = rprey*(1-prey/K)*prey -  alpha*prey*pred - beta*prey*pred
-#       dpred = eff*alpha*prey*pred - pmort*pred
-#      
-#       return(list(c(dprey,dpred)))} 
-#     
-#     else if (prey < 30) {
-#       message(paste("Running model without predation. If you want to run with predation, please use a higher value for prey population."))
-#       dprey = rprey*(1-prey/K)*prey -  alpha*prey*pred
-#       dpred = eff*alpha*prey*pred - pmort*pred
-#       
-#       return(list(c(dprey,dpred)))}})
-# }
-
-# lotvmodK = function(t, pop, pars) {
-# 
-#   with(as.list(c(pars, pop)), {
-#     print(paste("Prey population:", prey))
-#     if (prey >= 30) {
-#       dprey = rprey * (1 - prey / K) * prey - alpha * prey * pred - beta * prey * pred
-#       dpred = eff * alpha * prey * pred - pmort * pred
-#       message("Running model with predation")
-#       return(list(c(dprey, dpred)))
-#     } else if (prey < 30) {
-#       dprey = rprey * (1 - prey / K) * prey - alpha * prey * pred
-#       dpred = eff * alpha * prey * pred - pmort * pred
-#       message("Running model without predation.")
-#       return(list(c(dprey, dpred)))
-#     }
-#   })
-# }
-
-
-lotvmodK <- function(t, pop, pars, min_prey_pop) {
   with(as.list(c(pars, pop)), {
-    dprey = rprey * (1 - prey / K) * prey - alpha * prey * pred - beta * prey * pred
-    dpred <- eff * alpha * prey * pred - pmort * pred
-    
-    # ensure prey population remains above min_prey_pop
-    if (prey <= min_prey_pop) {
-      dprey <- max(dprey, 0)  # prevent prey from decreasing below min_prey_population
+    if (prey >= thresh) {
+      dprey = rprey * (1 - prey / K) * prey - alpha * prey * pred - beta * prey
+      dpred = eff * alpha * prey * pred - pmort * pred
+      return(list(c(dprey, dpred)))
+    } else if (prey < thresh) {
+      dprey = rprey * (1 - prey / K) * prey - alpha * prey * pred
+      dpred = eff * alpha * prey * pred - pmort * pred
+      return(list(c(dprey, dpred)))
     }
-    
-    return(list(c(dprey, dpred)))
   })
 }
 
