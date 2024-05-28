@@ -40,8 +40,10 @@ resl = as.data.frame(res) %>%
   pivot_longer(-time, names_to="species", values_to="pop")
 
 # graph both populations over time
-p1=ggplot(resl, aes(time, pop, col=species))+geom_line()
-p1
+ggplot(resl, aes(time, pop, col=species)) +
+  geom_line() +
+  theme_linedraw() +
+  labs(x = "Time", y = "Population")
 ```
 
 
@@ -50,14 +52,14 @@ Stability
 pars_stab <- data.frame(rprey = 0.5, K = 100, alpha = 0.3, beta = 0.05, eff = 0.2, pmort = 0.2)
 
 # now lets try initial conditions that will be stable
-# preyi = with(pars_stab, pmort/(eff*alpha))
+preyi = with(pars_stab, pmort/(eff*alpha))
 # predi = with(pars_stab, K-(K*(alpha-beta)/rprey))
-
-preyi = with(pars_stab, pmort / (eff * alpha))
-predi = with(pars_stab, rprey / (alpha + beta) * (1 - pmort / (eff * alpha * K)))
+# predi = with(pars_stab, rprey / (alpha + beta) * (1 - pmort / (eff * alpha * K)))
+predi = with(pars_stab, rprey / (alpha + beta) * (1-preyi/K))
 
 preyi
 predi
+
 # times when you want to evaluate
 days = seq(from=1,to=500)
 
@@ -66,21 +68,29 @@ currpop=c(prey=1, pred=1)
 # run our differential equation solver
 res = ode(func=lotvmodK, y=currpop, times=days, parms=pars, min_prey_pop = 0)
 # extract the results
-res_smallstart = as.data.frame(res) %>% gather(key="animal", value="pop",-time)
+res_smallstart = as.data.frame(res) %>% 
+  gather(key="animal", value="pop",-time)
 # graph both populations over time
-p1=ggplot(res_smallstart, aes(time, pop, col=animal))+geom_line()
-p1
+ggplot(res_smallstart, aes(time, pop, col=animal)) +
+  geom_line() +
+  theme_linedraw() +
+  labs(x = "Time", y = "Population")
+
 
 # lets first see what happens when we start our estimates of stable populations
 stablepop = c(prey=preyi, pred=predi)
 res = ode(func=lotvmodK, y=stablepop, times=days, parms=pars, min_prey_pop = 0)
-# estract the results
-res_stablestart = as.data.frame(res) %>% gather(key="animal", value="pop",-time)
+# exstract the results
+res_stablestart = as.data.frame(res) %>% 
+  gather(key="animal", value="pop",-time)
 # graph both populations over time
-p2=ggplot(res_stablestart, aes(time, pop, col=animal))+geom_line()
-p2
+ggplot(res_stablestart, aes(time, pop, col=animal)) + 
+  geom_line() +
+  theme_linedraw() +
+  labs(x = "Time", y = "Population")
+
 
 # explore with some different parameters
 ```
 
-We're defining stability as when populations do not change. 
+We're defining stability as when the predator and prey populations do not change over time. 
