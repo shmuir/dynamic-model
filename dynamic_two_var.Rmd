@@ -16,6 +16,7 @@ library(deSolve)
 library(lhs)
 library(purrr)
 library(ggpubr)
+library(patchwork)
 source("lotvmodK.R")
 lotvmodK
 ```
@@ -78,17 +79,239 @@ ggplot(res_smallstart, aes(time, pop, col=animal)) +
 # lets first see what happens when we start our estimates of stable populations
 stablepop = c(prey=preyi, pred=predi)
 res = ode(func=lotvmodK, y=stablepop, times=days, parms=pars_stab, thresh = 20)
-# exstract the results
+
+# extract the results
 res_stablestart = as.data.frame(res) %>% 
   gather(key="animal", value="pop",-time)
+
 # graph both populations over time
 ggplot(res_stablestart, aes(time, pop, col=animal)) + 
   geom_line() +
   theme_linedraw() +
   labs(x = "Time", y = "Population")
 
-
-# explore with some different parameters
 ```
 
-We're defining stability as when the predator and prey populations do not change over time. 
+We're defining stability as when the predator and prey populations do not change over time after 50 years. 
+
+Exploring Different Hunting Levels
+
+```{r}
+pars_hunt1 <- data.frame(rprey = 0.95, K = 2000, alpha = 0.01, beta = 0.1, eff = 0.4, pmort = 0.4)
+
+# now lets try initial conditions that will be stable
+preyi = with(pars_hunt1, pmort/(eff*alpha))
+predi = with(pars_hunt1, rprey / (alpha + beta) * (1-preyi/K))
+
+# times when you want to evaluate
+days = seq(from=1,to=200)
+
+# lets first see what happens when we start with 1 of each
+currpop=c(prey=preyi, pred=predi)
+# run our differential equation solver
+res = ode(func=lotvmodK, y=currpop, times=days, parms=pars_hunt1, thresh = 20)
+# extract the results
+res_hunt1 = as.data.frame(res) %>% 
+  gather(key="animal", value="pop",-time)
+# graph both populations over time
+hunt1 <- ggplot(res_hunt1, aes(time, pop, col=animal)) +
+  geom_line() +
+  theme_linedraw() +
+  labs(x = "Time", y = "Population", title = "Beta 0.1 with a threshold of 20")
+```
+
+```{r}
+pars_hunt2 <- data.frame(rprey = 0.95, K = 2000, alpha = 0.01, beta = 0.05, eff = 0.4, pmort = 0.4)
+
+# now lets try initial conditions that will be stable
+preyi = with(pars_hunt2, pmort/(eff*alpha))
+predi = with(pars_hunt2, rprey / (alpha + beta) * (1-preyi/K))
+
+# times when you want to evaluate
+days = seq(from=1,to=200)
+
+# lets first see what happens when we start with 1 of each
+currpop=c(prey=preyi, pred=predi)
+# run our differential equation solver
+res = ode(func=lotvmodK, y=currpop, times=days, parms=pars_hunt2, thresh = 5)
+# extract the results
+res_hunt2 = as.data.frame(res) %>% 
+  gather(key="animal", value="pop",-time)
+# graph both populations over time
+hunt2 <- ggplot(res_hunt2, aes(time, pop, col=animal)) +
+  geom_line() +
+  theme_linedraw() +
+  labs(x = "Time", y = "Population", title = "Beta 0.05 with a threshold of 5")
+```
+
+```{r}
+pars_hunt3 <- data.frame(rprey = 0.95, K = 2000, alpha = 0.01, beta = 0.05, eff = 0.4, pmort = 0.4)
+
+# now lets try initial conditions that will be stable
+preyi = with(pars_hunt3, pmort/(eff*alpha))
+predi = with(pars_hunt3, rprey / (alpha + beta) * (1-preyi/K))
+
+# times when you want to evaluate
+days = seq(from=1,to=200)
+
+# lets first see what happens when we start with 1 of each
+currpop=c(prey=preyi, pred=predi)
+# run our differential equation solver
+res = ode(func=lotvmodK, y=currpop, times=days, parms=pars_hunt3, thresh = 100, method = "ode45")
+# extract the results
+res_hunt3 = as.data.frame(res) %>% 
+  gather(key="animal", value="pop",-time)
+# graph both populations over time
+hunt3 <- ggplot(res_hunt3, aes(time, pop, col=animal)) +
+  geom_line() +
+  theme_linedraw() +
+  labs(x = "Time", y = "Population", title = "Beta 0.05 with a threshold of 100")
+
+hunt3
+```
+
+```{r}
+pars_hunt4 <- data.frame(rprey = 0.95, K = 2000, alpha = 0.01, beta = 0.05, eff = 0.4, pmort = 0.4)
+
+# now lets try initial conditions that will be stable
+preyi = with(pars_hunt4, pmort/(eff*alpha))
+predi = with(pars_hunt4, rprey / (alpha + beta) * (1-preyi/K))
+
+# times when you want to evaluate
+days = seq(from=1,to=200)
+
+# lets first see what happens when we start with 1 of each
+currpop=c(prey=preyi, pred=predi)
+# run our differential equation solver
+res = ode(func=lotvmodK, y=currpop, times=days, parms=pars_hunt4, thresh = 50)
+# extract the results
+res_hunt4 = as.data.frame(res) %>% 
+  gather(key="animal", value="pop",-time)
+# graph both populations over time
+hunt4 <- ggplot(res_hunt4, aes(time, pop, col=animal)) +
+  geom_line() +
+  theme_linedraw() +
+  labs(x = "Time", y = "Population", title = "Beta 0.05 with a threshold of 50")
+
+hunt4
+```
+
+```{r}
+pars_hunt5 <- data.frame(rprey = 0.95, K = 2000, alpha = 0.01, beta = 0.34, eff = 0.4, pmort = 0.4)
+
+# now lets try initial conditions that will be stable
+preyi = with(pars_hunt5, pmort/(eff*alpha))
+predi = with(pars_hunt5, rprey / (alpha + beta) * (1-preyi/K))
+
+# times when you want to evaluate
+days = seq(from=1,to=200)
+
+# lets first see what happens when we start with 1 of each
+currpop=c(prey=preyi, pred=predi)
+# run our differential equation solver
+res = ode(func=lotvmodK, y=currpop, times=days, parms=pars_hunt5, thresh = 20)
+# extract the results
+res_hunt5 = as.data.frame(res) %>% 
+  gather(key="animal", value="pop",-time)
+# graph both populations over time
+hunt5 <- ggplot(res_hunt5, aes(time, pop, col=animal)) +
+  geom_line() +
+  theme_linedraw() +
+  labs(x = "Time", y = "Population", title = "Beta 0.34 with a threshold of 20")
+
+hunt5
+```
+
+```{r}
+pars_hunt6 <- data.frame(rprey = 0.95, K = 2000, alpha = 0.01, beta = 0.34, eff = 0.4, pmort = 0.4)
+
+# now lets try initial conditions that will be stable
+preyi = with(pars_hunt6, pmort/(eff*alpha))
+predi = with(pars_hunt6, rprey / (alpha + beta) * (1-preyi/K))
+
+# times when you want to evaluate
+days = seq(from=1,to=200)
+
+# lets first see what happens when we start with 1 of each
+currpop=c(prey=preyi, pred=predi)
+# run our differential equation solver
+res = ode(func=lotvmodK, y=currpop, times=days, parms=pars_hunt6, thresh = 50)
+# extract the results
+res_hunt6 = as.data.frame(res) %>% 
+  gather(key="animal", value="pop",-time)
+# graph both populations over time
+hunt6 <- ggplot(res_hunt6, aes(time, pop, col=animal)) +
+  geom_line() +
+  theme_linedraw() +
+  labs(x = "Time", y = "Population", title = "Beta 0.34 with a threshold of 50")
+
+hunt6
+```
+
+```{r}
+pars_hunt7 <- data.frame(rprey = 0.95, K = 2000, alpha = 0.01, beta = 0.3, eff = 0.4, pmort = 0.4)
+
+# now lets try initial conditions that will be stable
+preyi = with(pars_hunt7, pmort/(eff*alpha))
+predi = with(pars_hunt7, rprey / (alpha + beta) * (1-preyi/K))
+
+# times when you want to evaluate
+days = seq(from=1,to=200)
+
+# lets first see what happens when we start with 1 of each
+currpop=c(prey=preyi, pred=predi)
+# run our differential equation solver
+res = ode(func=lotvmodK, y=currpop, times=days, parms=pars_hunt7, thresh = 20)
+# extract the results
+res_hunt7 = as.data.frame(res) %>% 
+  gather(key="animal", value="pop",-time)
+# graph both populations over time
+hunt7 <- ggplot(res_hunt7, aes(time, pop, col=animal)) +
+  geom_line() +
+  theme_linedraw() +
+  labs(x = "Time", y = "Population", title = "Beta 0.3 with a threshold of 20")
+```
+
+```{r}
+pars_hunt8 <- data.frame(rprey = 0.95, K = 2000, alpha = 0.01, beta = 0.5, eff = 0.4, pmort = 0.4)
+
+# now lets try initial conditions that will be stable
+preyi = with(pars_hunt8, pmort/(eff*alpha))
+predi = with(pars_hunt8, rprey / (alpha + beta) * (1-preyi/K))
+
+# times when you want to evaluate
+days = seq(from=1,to=200)
+
+# lets first see what happens when we start with 1 of each
+currpop=c(prey=preyi, pred=predi)
+# run our differential equation solver
+res = ode(func=lotvmodK, y=currpop, times=days, parms=pars_hunt8, thresh = 20, method = "ode45")
+# extract the results
+res_hunt8 = as.data.frame(res) %>% 
+  gather(key="animal", value="pop",-time)
+# graph both populations over time
+hunt8 <- ggplot(res_hunt8, aes(time, pop, col=animal)) +
+  geom_line() +
+  theme_linedraw() +
+  labs(x = "Time", y = "Population", title = "Beta 0.5 with a threshold of 20")
+
+hunt8
+```
+
+
+Beta set at 0.34 and vary threshold
+```{r}
+hunt5+hunt6
+```
+
+Beta set at 0.05 and vary threshold
+```{r}
+hunt3 + hunt4 / hunt2
+```
+
+Beta varied and threshold set at 20
+```{r}
+hunt1/hunt7/hunt8
+```
+
+**We tested hunting thresholds between 5 and 100, as well as hunting rates from 0.05 to 0.34. All of these combinations resulted in stable predator and prey populations after approximately 150 years. The combination of a hunting rate of 0.05 and a threshold level of 100 resulted in the bade ODE solver failing to run for the entirety of the time sequence. However, when the ODE solver was changed to ODE45 the combination ran successfully for the entirety of the time sequence. This combination of hunting rate and minimum prey threshold stabilized the fastest out of all of the combinations. Overall as our hunting rate increases the prey and predator populations stabilize more quickly. Our recommendation based off of this exploration with a stability defined as the predator and prey populations not changing after 50 years would be a hunting rate of 0.05 and a minimum prey threshold of 100.**
