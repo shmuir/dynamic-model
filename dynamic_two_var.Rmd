@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
 ```{r}
@@ -92,10 +92,9 @@ ggplot(res_stablestart, aes(time, pop, col=animal)) +
 
 ```
 
-We're defining stability as when the predator and prey populations do not change over time after 50 years. 
+**We're defining stability as when the predator and prey populations do not change over time after 50 years.** 
 
-Exploring Different Hunting Levels
-
+#### Exploring Different Hunting Levels
 ```{r}
 pars_hunt1 <- data.frame(rprey = 0.95, K = 2000, alpha = 0.01, beta = 0.1, eff = 0.4, pmort = 0.4)
 
@@ -167,7 +166,7 @@ hunt3 <- ggplot(res_hunt3, aes(time, pop, col=animal)) +
   theme_linedraw() +
   labs(x = "Time", y = "Population", title = "Beta 0.05 with a threshold of 100")
 
-hunt3
+# hunt3
 ```
 
 ```{r}
@@ -193,7 +192,7 @@ hunt4 <- ggplot(res_hunt4, aes(time, pop, col=animal)) +
   theme_linedraw() +
   labs(x = "Time", y = "Population", title = "Beta 0.05 with a threshold of 50")
 
-hunt4
+# hunt4
 ```
 
 ```{r}
@@ -219,7 +218,7 @@ hunt5 <- ggplot(res_hunt5, aes(time, pop, col=animal)) +
   theme_linedraw() +
   labs(x = "Time", y = "Population", title = "Beta 0.34 with a threshold of 20")
 
-hunt5
+# hunt5
 ```
 
 ```{r}
@@ -245,7 +244,7 @@ hunt6 <- ggplot(res_hunt6, aes(time, pop, col=animal)) +
   theme_linedraw() +
   labs(x = "Time", y = "Population", title = "Beta 0.34 with a threshold of 50")
 
-hunt6
+# hunt6
 ```
 
 ```{r}
@@ -295,23 +294,23 @@ hunt8 <- ggplot(res_hunt8, aes(time, pop, col=animal)) +
   theme_linedraw() +
   labs(x = "Time", y = "Population", title = "Beta 0.5 with a threshold of 20")
 
-hunt8
+# hunt8
 ```
 
 
 Beta set at 0.34 and vary threshold
 ```{r}
-hunt5+hunt6
+hunt5 / hunt6 + plot_layout(guides = "collect")
 ```
 
 Beta set at 0.05 and vary threshold
 ```{r}
-hunt3 + hunt4 / hunt2
+hunt3 / hunt4 / hunt2 + plot_layout(guides = "collect")
 ```
 
 Beta varied and threshold set at 20
 ```{r}
-hunt1/hunt7/hunt8
+hunt1 / hunt7 / hunt8 + plot_layout(guides = "collect")
 ```
 
-**We tested hunting thresholds between 5 and 100, as well as hunting rates from 0.05 to 0.34. All of these combinations resulted in stable predator and prey populations after approximately 150 years. The combination of a hunting rate of 0.05 and a threshold level of 100 resulted in the bade ODE solver failing to run for the entirety of the time sequence. However, when the ODE solver was changed to ODE45 the combination ran successfully for the entirety of the time sequence. This combination of hunting rate and minimum prey threshold stabilized the fastest out of all of the combinations. Overall as our hunting rate increases the prey and predator populations stabilize more quickly. Our recommendation based off of this exploration with a stability defined as the predator and prey populations not changing after 50 years would be a hunting rate of 0.05 and a minimum prey threshold of 100.**
+**We tested hunting thresholds between 5 and 100, as well as hunting rates from 0.05 to 0.34. All of these combinations resulted in stable predator and prey populations after approximately 150 years. The combination of a hunting rate of 0.05 and a threshold level of 100 resulted in the ODE solver failing to run for the entirety of the time sequence. However, when the ODE solver was changed to ode45, the combination ran successfully for the entirety of the time sequence. This combination of hunting rate and minimum prey threshold stabilized the fastest out of all of the combinations. Overall as our hunting rate increases the prey and predator populations stabilize more quickly. Our recommendation based off of this exploration with a stability defined as the predator and prey populations not changing after 50 years would be a hunting rate of 0.05 and a minimum prey threshold of 100.**
